@@ -13,8 +13,8 @@ from rich.text import Text
 from rich.logging import RichHandler
 from rich.prompt import Confirm
 
-# from .file_processor import FileProcessor
-# from .file_categorizer import FileCategory
+from .file_processor import FileProcessor
+#from .file_categorizer import FileCategory
 
 console = Console()
 
@@ -56,5 +56,41 @@ class CLIInterface:
             export_dir: Export directory path
             backup_dir: Backup directory path
         """
-        # self.processor = FileProcessor(export_dir, backup_dir)
+        self.processor = FileProcessor(export_dir, backup_dir)
         self.console = console
+
+    def display_welcome(self):
+        """Display welcome banner"""
+        welcome_text = Text("dhg-monthly-backup", style="bold blue")
+        welcome_text.append(
+            "\nAutomated Media Organization Tool", style="dim")
+
+        panel = Panel(
+            welcome_text,
+            title="Welcome",
+            border_style="blue",
+            padding=(1, 2)
+        )
+        self.console.print(panel)
+
+    def check_directories(self) -> bool:
+        """
+        Check if export and backup directories exist.
+
+        Returns:
+            True if both directories exist, False otherwise
+        """
+        export_dir = Path(self.processor.export_dir)
+        backup_dir = Path(self.processor.backup_dir)
+
+        if not export_dir.exists():
+            self.console.print(
+                f"Export directory '{export_dir}' does not exist.", style="bold red")
+            return False
+
+        if not backup_dir.exists():
+            self.console.print(
+                f"Backup directory '{backup_dir}' does not exist.", style="bold red")
+            return False
+
+        return True
