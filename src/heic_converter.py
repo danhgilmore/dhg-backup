@@ -42,7 +42,7 @@ class HeicConverter:
         ext = Path(file_path).suffix.lower()
         return ext in ['.heic', '.heif']
 
-    def convert_heic_to_jpeg(self, heic_path: str, output_dir: str = None) -> Optional[str]:
+    def convert_heic_to_jpeg(self, heic_path: str, output_dir: str) -> Optional[str]:
         """
         Convert HEIC file to JPEG with EXIF preservation.
 

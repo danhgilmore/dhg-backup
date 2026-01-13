@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+
 from typing import Dict, List
 from pathlib import Path
 
@@ -13,8 +14,8 @@ from rich.text import Text
 from rich.logging import RichHandler
 from rich.prompt import Confirm
 
-from .file_processor import FileProcessor
-#from .file_categorizer import FileCategory
+from file_processor import FileProcessor
+# from .file_categorizer import FileCategory
 
 console = Console()
 
@@ -73,15 +74,19 @@ class CLIInterface:
         )
         self.console.print(panel)
 
-    def check_directories(self) -> bool:
+    def check_directories(self, export_dir, backup_dir) -> bool:
         """
         Check if export and backup directories exist.
 
         Returns:
             True if both directories exist, False otherwise
         """
-        export_dir = Path(self.processor.export_dir)
-        backup_dir = Path(self.processor.backup_dir)
+        # print(
+        #     f"export dir passed into function: {export_dir}   backup dir: {backup_dir}")
+
+        export_dir = Path(self.processor.export_dir, self.processor.backup_dir)
+        # backup_dir = Path(self.processor.backup_dir)
+        # print(f"export_dir: {export_dir}, backup_dir: {backup_dir}")
 
         if not export_dir.exists():
             self.console.print(

@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple, Optional
 from datetime import datetime
 
-from .exif_handler import ExifHandler
-from .heic_converter import HeicConverter
-from .file_categorizer import FileCategorizer, FileCategory
+from exif_handler import ExifHandler
+from heic_converter import HeicConverter
+from file_categorizer import FileCategorizer, FileCategory
 
 logger = logging.getLogger(__name__)
 
