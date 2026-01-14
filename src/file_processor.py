@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class FileProcessor:
     """Main file processing coordinator"""
 
-    def __init__(self, export_dir: str = "export", backup_dir: str = "backup"):
+    def __init__(self, export_dir, backup_dir):
         """
         Initialize file processor.
 

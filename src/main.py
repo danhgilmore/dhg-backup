@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import io
+import sys
+# import io
 import os
 
 import configparser
@@ -54,9 +55,11 @@ def main():
 
     cli = CLI.CLIInterface()
     cli.display_welcome()
-    print("checking directories")
+    # print("checking directories")
+    if not cli.check_directories(export_dir, backup_dir):
+        cli.console.print("[red]Cannot proceed due to directory issues.[/red]")
+        sys.exit(1)
 
-    cli.check_directories(export_dir, backup_dir)
     print("done checking directories")
 
 

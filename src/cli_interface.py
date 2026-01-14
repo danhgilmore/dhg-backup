@@ -84,9 +84,9 @@ class CLIInterface:
         # print(
         #     f"export dir passed into function: {export_dir}   backup dir: {backup_dir}")
 
-        export_dir = Path(self.processor.export_dir, self.processor.backup_dir)
-        # backup_dir = Path(self.processor.backup_dir)
-        # print(f"export_dir: {export_dir}, backup_dir: {backup_dir}")
+        export_dir = Path(export_dir)
+        backup_dir = Path(backup_dir)
+        print(f"export_dir: {export_dir}, backup_dir: {backup_dir}")
 
         if not export_dir.exists():
             self.console.print(
