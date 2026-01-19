@@ -40,3 +40,53 @@ class FileProcessor:
         self.used_timestamps = set()
         self.failed_files = []
         self.conversion_log = []
+
+    def _process_single_file(self, file_path: str, target_dir: str, dry_run: bool):
+        """
+        Process a single file: extract timestamp, convert if HEIC, and move to target directory.
+
+        Args:
+            file_path: Path to the file to process
+            target_dir: Directory to move the processed file to
+            dry_run: If True, simulate processing without making changes
+            """
+
+    def _scan_export_directory(self) -> List[str]:
+        """Scan export directory and return list of files to process"""
+        if not os.path.isdir(self.export_dir):
+            logger.error(f"Export directory does not exist: {self.export_dir}")
+            return []
+        files = []
+        for root, dirs, filenames in os.walk(self.export_dir):
+            for filename in filenames:
+                # skip hidden files
+                if not filename.startswith('.'):
+                    files.append(os.path.join(root, filename))
+        return files
+
+    def process_all_files(self, dry_run: bool = False) -> Dict[str, any]:
+        """
+        Process all files in the export directory.
+
+        Args:
+            dry_run: If True, simulate processing without making changes
+
+        Returns:
+            Summary dictionary of processing results
+        """
+        logger.info(f"Starting file processing... (dry_run={dry_run})")
+
+        all_files = self._scan_export_directory()
+        if not all_files:
+            logger.warning("No files found in {self.export_dir}")
+            return {}
+
+    def _generate_summary(self) -> Dict[str, any]:
+        """Generate a summary of the processing results"""
+
+        return {
+            'files_processed': len(self.processed_files),
+            'files_failed': len(self.failed_files),
+            'processed_files': self.processed_files,
+            'failed_files': self.failed_files
+        }

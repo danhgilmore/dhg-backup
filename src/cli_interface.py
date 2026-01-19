@@ -1,8 +1,8 @@
 import os
-import sys
 import logging
 
-from typing import Dict, List
+from typing import Dict, List, Set, Tuple, Optional
+
 from pathlib import Path
 
 import click
@@ -81,8 +81,6 @@ class CLIInterface:
         Returns:
             True if both directories exist, False otherwise
         """
-        # print(
-        #     f"export dir passed into function: {export_dir}   backup dir: {backup_dir}")
 
         export_dir = Path(export_dir)
         backup_dir = Path(backup_dir)
@@ -99,3 +97,124 @@ class CLIInterface:
             return False
 
         return True
+
+    def process_with_progress(self, dry_run: bool = False) -> Dict:
+        """
+        Process files with progress display.
+
+        Args:
+            dry_run: If True, simulate processing without making changes
+
+        Returns:
+            Dictionary with processing results
+        """
+        with self.console.status("[bold green]Scanning export directory...") as status:
+            files = self.processor._scan_export_directory()
+
+        if not files:
+            self.console.print(
+                "[yellow]No files found to process.[/yellow]")
+            return {}
+        self.display_file_scan_results(files)
+
+        if dry_run:
+            self.console.print(
+                f"\n[bold blue]DRY RUN MODE ENABLED[/bold blue] - No changes will be made.\n")
+
+        # Confirm before proceeding
+        if not dry_run:
+            if not Confirm.ask(f"\nProceed with processing {len(files)} files?"):
+                self.console.print("[yellow]Processing cancelled[/yellow]")
+                return {}
+        # Process with progress tracking
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=self.console
+        ) as progress:
+
+            # # Add tasks for different phases
+            # categorize_task = progress.add_task("Categorizing files...", total=1)
+            # sidecar_task = progress.add_task("Processing sidecar files...", total=1)
+            # convert_task = progress.add_task("Converting HEIC files...", total=None)
+            # organize_task = progress.add_task("Organizing files...", total=None)
+
+            # Categorize files
+            # categorized = self.processor.categorizer.batch_categorize(files)
+            # progress.update(categorize_task, completed=1)
+
+            # Delete sidecar files
+            # sidecar_files = categorized.get(FileCategory.SIDECAR, [])
+            # if sidecar_files:
+            #     progress.update(sidecar_task, total=len(sidecar_files))
+            #     self.processor._delete_sidecar_files(sidecar_files, dry_run)
+            # progress.update(sidecar_task, completed=progress.tasks[sidecar_task].total or 1)
+
+            # Process all files using the FileProcessor's main method
+            # This replaces the duplicate processing loop that was causing duplicates
+            self.processor.process_all_files(dry_run=dry_run)
+
+        # Generate and return summary
+        return self.processor._generate_summary()
+
+    def display_file_scan_results(self, files: List[str]):
+        """
+        Display results of file scanning.
+
+        Args:
+            files: List of files found
+        """
+        if not files:
+            self.console.print("[yellow]No files found to process.[/yellow]")
+            return
+
+        table = Table(title="File Scan Results", show_lines=True)
+        table.add_column("Total Files Found", justify="right", style="cyan")
+        table.add_column("Sample Files", style="magenta")
+
+        sample_files = "\n".join(files[:5])  # Show first 5 files as sample
+        table.add_row(str(len(files)), sample_files)
+
+        self.console.print(table)
+
+    def display_results(self, results: Dict, dry_run: bool = False):
+        """
+
+        Display processing results.
+        Args:
+            results: Dictionary with processing results
+            dry_run: If True, indicates dry run mode
+        """
+        if not results:
+            return
+
+        # Success/failure summary
+        success_count = results.get('files_processed', 0)
+        failure_count = results.get('files_failed', 0)
+
+        if dry_run:
+            title = "Dry Run Processing Results"
+            title_style = "bold blue"
+        elif failure_count == 0:
+            title = "Processing Results - All Successful"
+            title_style = "bold green"
+        else:
+            title = "Processing Results - Some Failures"
+            title_style = "bold red"
+
+        table = Table(title=title, show_header=True,
+                      header_style="bold magenta")
+        table.add_column("Metric", style="cyan", width=25)
+        table.add_column("Count", justify="right", style="green")
+
+        table.add_row("Files Processed", str(success_count))
+        table.add_row("Files Failed", str(failure_count))
+
+        if failure_count > 0:
+            table.add_row(
+                "Check Failed Files Below", str(failure_count), style="red")
+
+        self.console.print(table)
