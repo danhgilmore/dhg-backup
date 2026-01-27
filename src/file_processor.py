@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple, Optional
 from datetime import datetime
 
-# from exif_handler import ExifHandler
-# from heic_converter import HeicConverter
-# from file_categorizer import FileCategorizer, FileCategory
+from exif_handler import ExifHandler
+from heic_converter import HeicConverter
+from file_categorizer import FileCategorizer, FileCategory
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class FileProcessor:
         self.backup_dir = backup_dir
 
         # Initialize component handlers
-        # self.exif_handler = ExifHandler()
-        # self.heic_converter = HeicConverter()
-        # self.categorizer = FileCategorizer()
+        self.exif_handler = ExifHandler()
+        self.heic_converter = HeicConverter()
+        self.categorizer = FileCategorizer()
 
         # Track processed files and timestamps
         self.processed_files = []
@@ -75,13 +75,13 @@ class FileProcessor:
         Returns:
             List of created directories
         """
-        created_dirs = []
+        files = []
         target_dir = Path(base_backup_dir)
         if not target_dir.exists():
             target_dir.mkdir(parents=True, exist_ok=True)
-            created_dirs.append(str(target_dir))
+            files.append(str(target_dir))
             logger.info(f"Created backup directory: {target_dir}")
-        return created_dirs
+        return files
 
     def _process_single_file(self, file_path: str, target_dir: str, dry_run: bool):
         """

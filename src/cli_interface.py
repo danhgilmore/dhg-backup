@@ -74,7 +74,7 @@ class CLIInterface:
         )
         self.console.print(panel)
 
-    def check_directories(self, export_dir, backup_dir) -> bool:
+    def check_directories(self) -> bool:
         """
         Check if export and backup directories exist.
 
@@ -82,18 +82,31 @@ class CLIInterface:
             True if both directories exist, False otherwise
         """
 
-        export_dir = Path(export_dir)
-        backup_dir = Path(backup_dir)
-        print(f"export_dir: {export_dir}, backup_dir: {backup_dir}")
+        # export_dir = Path(export_dir)
+        # backup_dir = Path(backup_dir)
+        export_path = Path(self.processor.export_dir)
+        backup_path = Path(self.processor.backup_dir)
 
-        if not export_dir.exists():
+        # Check export directory
+        if not export_path.exists():
             self.console.print(
-                f"Export directory '{export_dir}' does not exist.", style="bold red")
+                f"[red]Error: Export directory does not exist: {export_path}[/red]")
+            self.console.print(
+                f"[yellow]Please create the directory and place your exported photos there:[/yellow]")
+            self.console.print(f"[dim]  mkdir {export_path}[/dim]")
+            self.console.print(
+                f"[dim]  # Then copy your iCloud Photos export files to {export_path}/[/dim]")
             return False
 
-        if not backup_dir.exists():
+        if not any(export_path.iterdir()):
             self.console.print(
-                f"Backup directory '{backup_dir}' does not exist.", style="bold red")
+                f"[yellow]Warning: Export directory is empty: {export_path}[/yellow]")
+            if not Confirm.ask("Continue anyway?"):
+                return False
+
+        if not backup_path.exists():
+            self.console.print(
+                f"Backup directory '{backup_path}' does not exist.", style="bold red")
             return False
 
         return True
