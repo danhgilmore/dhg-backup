@@ -196,3 +196,145 @@ class FileCategorizer:
                 f"Error checking generated content for {file_path}: {e}")
 
         return False
+
+    def batch_categorize(self, file_paths: List[str]) -> Dict[FileCategory, List[str]]:
+        """
+        Categorize a batch of files.
+
+        Args:
+            file_paths: List of file paths to categorize
+
+        Returns:
+            Dictionary mapping FileCategory to list of file paths
+        """
+        for category in self.categorized_files:
+            self.categorized_files[category].clear()
+
+        for file_path in file_paths:
+            if not os.path.exists(file_path):
+                logger.warning(f"File not found: {file_path}")
+                continue
+            category = self.categorize_file(file_path)
+            self.categorized_files[category].append(file_path)
+        return self.categorized_files
+
+    def get_files_by_category(self, category: FileCategory) -> List[str]:
+        """
+        Get list of files for a specific category.
+
+        Args:
+            category: FileCategory enum value
+        Returns:
+            List of file paths in the specified category
+        """
+        return self.categorized_files[category].copy()
+
+    def get_sidecar_files(self) -> List[str]:
+        """
+        Get list of sidecar files that should be deleted.
+
+        Returns:
+            List of sidecar file paths
+        """
+        return self.get_files_by_category(FileCategory.SIDECAR)
+
+    def get_processable_files(self) -> Dict[FileCategory, List[str]]:
+        """
+        Get files that should be processed (excludes sidecar and unknown).
+
+        Returns:
+            Dictionary of processable files by category
+        """
+        return {
+            FileCategory.PHOTO: self.get_files_by_category(FileCategory.PHOTO),
+            FileCategory.VIDEO: self.get_files_by_category(FileCategory.VIDEO),
+            FileCategory.SCREENSHOT: self.get_files_by_category(FileCategory.SCREENSHOT),
+            FileCategory.GENERATED: self.get_files_by_category(
+                FileCategory.GENERATED)
+        }
+
+    def get_target_directory(self, category: FileCategory, base_backup_dir: str) -> str:
+        """
+        Get target directory path for a file category.
+
+        Args:
+            category: FileCategory
+            base_backup_dir: Base backup directory path
+
+        Returns:
+            Full path to target directory
+        """
+        if category == FileCategory.PHOTO:
+            return os.path.join(base_backup_dir, "photos")
+        elif category == FileCategory.VIDEO:
+            return os.path.join(base_backup_dir, "videos")
+        elif category == FileCategory.SCREENSHOT:
+            return os.path.join(base_backup_dir, "screenshots")
+        elif category == FileCategory.GENERATED:
+            return os.path.join(base_backup_dir, "generated")
+        elif category == FileCategory.UNKNOWN:
+            return os.path.join(base_backup_dir, "unknown")
+        else:
+            raise ValueError(
+                f"No target directory defined for category: {category}")
+
+    def ensure_target_directories(self, base_backup_dir: str) -> List[str]:
+        """
+        Create target directories if they don't exist.
+
+        Args:
+            base_backup_dir: Base backup directory path
+
+        Returns:
+            List of created directory paths
+        """
+        directories = []
+        for category in [FileCategory.PHOTO, FileCategory.VIDEO, FileCategory.SCREENSHOT, FileCategory.GENERATED, FileCategory.UNKNOWN]:
+            target_dir = self.get_target_directory(category, base_backup_dir)
+            os.makedirs(target_dir, exist_ok=True)
+            directories.append(target_dir)
+
+        return directories
+
+    def get_categorization_stats(self) -> Dict[str, int]:
+        """
+        Get statistics about file categorization.
+
+        Returns:
+            Dictionary with categorization counts
+        """
+        return {
+            'photos': len(self.categorized_files[FileCategory.PHOTO]),
+            'videos': len(self.categorized_files[FileCategory.VIDEO]),
+            'screenshots': len(self.categorized_files[FileCategory.SCREENSHOT]),
+            'generated': len(self.categorized_files[FileCategory.GENERATED]),
+            'unknown': len(self.categorized_files[FileCategory.UNKNOWN]),
+            'sidecar': len(self.categorized_files[FileCategory.SIDECAR]),
+            'total': sum(len(files) for files in self.categorized_files.values())
+        }
+
+    def get_file_summary(self) -> str:
+        """
+        Get human-readable summary of categorized files.
+
+        Returns:
+            Formatted string summary
+        """
+        stats = self.get_categorization_stats()
+
+        summary_lines = [
+            f"File Categorization Summary:",
+            f"  Photos: {stats['photos']} files",
+            f"  Videos: {stats['videos']} files",
+            f"  Screenshots: {stats['screenshots']} files",
+            f"  Unknown: {stats['unknown']} files",
+            f"  Sidecar (to delete): {stats['sidecar']} files",
+            f"  Total: {stats['total']} files"
+        ]
+
+        return "\n".join(summary_lines)
+
+    def clear_categorization(self):
+        """Clear all categorized files"""
+        for category in self.categorized_files:
+            self.categorized_files[category].clear()

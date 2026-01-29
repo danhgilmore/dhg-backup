@@ -82,8 +82,6 @@ class CLIInterface:
             True if both directories exist, False otherwise
         """
 
-        # export_dir = Path(export_dir)
-        # backup_dir = Path(backup_dir)
         export_path = Path(self.processor.export_dir)
         backup_path = Path(self.processor.backup_dir)
 
@@ -104,12 +102,61 @@ class CLIInterface:
             if not Confirm.ask("Continue anyway?"):
                 return False
 
-        if not backup_path.exists():
+        # Create backup directory if it doesn't exist
+        try:
+            backup_path.mkdir(parents=True, exist_ok=True)
             self.console.print(
-                f"Backup directory '{backup_path}' does not exist.", style="bold red")
+                f"[green]Backup directory is ready: {backup_path}[/green]")
+        except Exception as e:
+            self.console.print(
+                f"[red]Error: Cannot create backup directory: {backup_path} {e}[/red]")
             return False
 
         return True
+
+    def display_file_scan_results(self, files: List[str]):
+        """
+        Display results of file scanning.
+
+        Args:
+            files: List of files found
+        """
+        if not files:
+            self.console.print("[yellow]No files found to process.[/yellow]")
+            return
+
+        # Categorize files for display
+        self.processor.categorizer.batch_categorize(files)
+        stats = self.processor.categorizer.get_categorization_stats()
+
+        # Create summary table
+
+        table = Table(title="File Scan Results", show_lines=True)
+        table.add_column("Category", style="cyan", width=15)
+        table.add_column("Count", justify="right", style="green")
+        table.add_column("Description", style="dim")
+
+        table.add_row("Photos", str(stats['photos']), "JPEG, PNG, HEIC, etc.")
+        table.add_row("Videos", str(stats['videos']), "MOV, MP4, M4V, etc.")
+        table.add_row("Screenshots", str(
+            stats['screenshots']), "PNG files with screenshot patterns")
+        table.add_row("Sidecar Files", str(
+            stats['sidecar']), "Apple .aae files (will be deleted)")
+
+        if stats['unknown'] > 0:
+            table.add_row("Unknown", str(
+                stats['unknown']), "Unrecognized file types", style="yellow")
+
+        table.add_column("Total Files Found", justify="right", style="cyan")
+        table.add_column("Sample Files", style="magenta")
+
+        table.add_row("", "", "", style="dim")
+        table.add_row("Total", str(stats['total']),
+                      "Files to process", style="bold")
+        # sample_files = "\n".join(files[:5])  # Show first 5 files as sample
+        # table.add_row(str(len(files)), sample_files)
+
+        self.console.print(table)
 
     def process_with_progress(self, dry_run: bool = False) -> Dict:
         """
@@ -172,26 +219,6 @@ class CLIInterface:
 
         # Generate and return summary
         return self.processor._generate_summary()
-
-    def display_file_scan_results(self, files: List[str]):
-        """
-        Display results of file scanning.
-
-        Args:
-            files: List of files found
-        """
-        if not files:
-            self.console.print("[yellow]No files found to process.[/yellow]")
-            return
-
-        table = Table(title="File Scan Results", show_lines=True)
-        table.add_column("Total Files Found", justify="right", style="cyan")
-        table.add_column("Sample Files", style="magenta")
-
-        sample_files = "\n".join(files[:5])  # Show first 5 files as sample
-        table.add_row(str(len(files)), sample_files)
-
-        self.console.print(table)
 
     def display_results(self, results: Dict, dry_run: bool = False):
         """
